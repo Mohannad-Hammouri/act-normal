@@ -84,6 +84,9 @@ h1,h2,h3{margin:0;text-wrap:balance;font-weight:400}
 #tip{position:absolute;left:50%;top:calc(16px + env(safe-area-inset-top,0px));transform:translateX(-50%);font-size:clamp(17px,1.6vw,24px);font-weight:800;background:rgba(18,11,34,.85);padding:6px 20px;border-radius:14px;border:2px solid var(--lamp);white-space:nowrap;pointer-events:none;max-width:60vw;overflow:hidden;text-overflow:ellipsis}
 #rec{position:absolute;top:calc(16px + env(safe-area-inset-top,0px));left:max(20px,env(safe-area-inset-left,0px));font-family:ui-monospace,monospace;font-size:clamp(18px,1.7vw,26px);font-weight:700;color:#fff;background:#000a;padding:4px 14px;border-radius:8px;pointer-events:none}
 #rec i{display:inline-block;width:.7em;height:.7em;border-radius:50%;background:#ff3b55;margin-inline-end:8px;vertical-align:middle;animation:blink 1s infinite}
+#blind{position:absolute;inset:0;display:grid;place-items:center;background:repeating-linear-gradient(0deg,#0b0716 0 3px,#120c22 3px 5px)}
+#blind div{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:clamp(26px,2.6vw,40px);font-weight:800;color:var(--muted);margin-top:-12vh}
+#blind span{font-size:clamp(70px,8vw,120px)}
 #scan{position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,#0000 0 3px,#0002 3px 4px);box-shadow:inset 0 0 120px #000a}
 @keyframes blink{50%{opacity:.25}}
 #banner{position:absolute;left:50%;top:22%;transform:translate(-50%,-50%) scale(.9);opacity:0;transition:all .25s;pointer-events:none;
@@ -237,6 +240,7 @@ h1,h2,h3{margin:0;text-wrap:balance;font-weight:400}
   <div id="dark"></div>
   <div id="scan" hidden></div>
   <div id="labels"></div>
+  <div id="blind" hidden><div><span>📼</span>انتهى التسجيل… شو بتتذكر؟</div></div>
   <div id="hud" hidden><div class="pill" id="hudL"></div><div class="timer" id="hudT"></div></div>
   <div id="rec" hidden></div>
   <div id="tip" hidden></div>
@@ -426,8 +430,8 @@ const lookName=lk=>`${LOOKS[lk].e} ${LOOKS[lk].n}`;
 function lookSvg(lk,size){const V=LOOKS[lk]||LOOKS[0],d=V.d;
   return `<svg class="sw" viewBox="0 0 100 100" ${size?`width="${size}" height="${size}"`:''} aria-hidden="true"><ellipse cx="50" cy="95" rx="24" ry="4" fill="#000" opacity=".3"/><ellipse cx="50" cy="74" rx="22" ry="21" fill="${V.c}" stroke="#0003" stroke-width="1.5"/><circle cx="50" cy="37" r="25" fill="#ffd9b3"/><path d="M25 35a25 25 0 0 1 50 0q-6-9-25-9t-25 9z" fill="${d}"/><circle cx="42" cy="40" r="3.6" fill="#2b1f45"/><circle cx="58" cy="40" r="3.6" fill="#2b1f45"/><circle cx="35" cy="48" r="3.6" fill="#ff8fab" opacity=".7"/><circle cx="65" cy="48" r="3.6" fill="#ff8fab" opacity=".7"/><path d="M45 49q5 4 10 0" stroke="#2b1f45" stroke-width="2" fill="none" stroke-linecap="round"/></svg>`}
 const SEGS={
-  steal:{t:'اسرق!',e:'🕵️',m:'steal',rules:['كل الشخصيات بتتمشى لحالها، وكل وحدة بلون. التلفون بيقلك لونك.','اكبس «اسرق» بأي وقت: شخصيتك بتروح على أقرب غرض وبتسرقه، وبعدها بتطلع من الغرفة.','💎 بنص الجولة بتطلع جوهرة ذهبية، وبآخر 10 ثواني كل غرض +1.','بالآخر صوّتوا على ألوان الحرامية، لحد 3.']},
-  camera:{t:'ذاكرة الكاميرا',e:'📹',m:'camera',rules:['اتفرّجوا على تسجيل الكاميرا 15 ثانية، وركّزوا بكل إشي.','بعده 3 أسئلة على التلفون. الأصح والأسرع بياخذ أكثر.','3 تسجيلات، وكل واحد أصعب من اللي قبله.']},
+  steal:{t:'اسرق!',e:'🕵️',m:'steal',rules:['كل الشخصيات بتتمشى لحالها، وكل وحدة بلون. التلفون بيقلك لونك.','اكبس «اسرق» بأي وقت: شخصيتك بتروح على أقرب غرض وبتسرقه، وبعدها بتطلع من الغرفة.','أكثر إشي 3 سرقات. 💎 بنص الجولة بتطلع جوهرة ذهبية، وبآخر 10 ثواني كل غرض +1.','بالآخر صوّتوا على ألوان الحرامية: الصح +1، والغلط −1، والحرامي بيخسر 2 عن كل واحد حزره.']},
+  camera:{t:'ذاكرة الكاميرا',e:'📹',m:'camera',rules:['اتفرّجوا على تسجيل الكاميرا 15 ثانية بغرفتين، وركّزوا بكل إشي.','بعدها الشاشة بتنطفي، وبيجي سؤالين على التلفون. الصح بأول 5 ثواني +2، وبعدها +1.','3 تسجيلات، وكل واحد أصعب من اللي قبله.']},
   where:{t:'وين إنت؟',e:'🦘',m:'whereami',rules:['إنت واحد من الشخصيات… بس ما بتعرف مين!','اكبس «نُطّ» وشوف مين نطّ معك، وبعدين اكبس على غرفتك.','النطّات محدودة، والغلط بيخصم نقطة.']},
   bomb:{t:'القنبلة',e:'💣',m:'bomb',rules:['إذا صارت القنبلة معك، ارميها على حدا بسرعة!','ما بتقدر تمسكها أكثر من 5 ثواني، ولا ترجعها للي رماها عليك.','اللي بتنفجر فيه بيطلع. كل ما ضلّيت أكثر، نقاطك أكثر.']},
 };
@@ -636,6 +640,7 @@ async function asHost(){
   function computeView(){const k=VIEW.key;
     if(k==='salon')return viewBox(9.6,17.4,.6,7.6,3,[110,90]);
     if(k==='quiz')return viewBox(-.6,HW+.6,-.6,HD+.6,2.1,[70,215]);
+    if((k==='cam2'||k==='cam2q')&&G.allow){const rs=G.allow.map(i=>ROOMS[i]),x0=Math.min(...rs.map(r=>r.x0)),z0=Math.min(...rs.map(r=>r.z0)),x1=Math.max(...rs.map(r=>r.x0+RW)),z1=Math.max(...rs.map(r=>r.z0+RD));return viewBox(x0-.3,x1+.3,z0-.3,z1+.3,2.4,k==='cam2q'?[70,215]:[86,40])}
     return viewBox(-.6,HW+.6,-.6,HD+.6,2.1,[86,40])}
   function setView(k,instant){VIEW.key=k;VIEW.tgt=computeView();if(instant||!VIEW.cur)VIEW.cur=Object.assign({},VIEW.tgt)}
   function applyView(dt){const f=1-Math.exp(-dt*3.2);['l','r','t','b'].forEach(k=>VIEW.cur[k]+=(VIEW.tgt[k]-VIEW.cur[k])*f);cam.left=VIEW.cur.l;cam.right=VIEW.cur.r;cam.top=VIEW.cur.t;cam.bottom=VIEW.cur.b;cam.updateProjectionMatrix()}
@@ -666,7 +671,7 @@ async function asHost(){
   function resetObjects(){OBJS.forEach(o=>{o.stolen=false;o.gone=false;o.goneT=null;if(o.itemG)o.itemG.visible=true});HIDES.forEach(h=>h.occ=null);setHouseVisible(true);buildGrid()}
   const nearObj=(c,rad=NEAR)=>{let best=null,bd=rad;const rm=roomAt(c.x,c.z);OBJS.forEach(o=>{if(o.room!==rm||o.gone)return;const d=Math.hypot(o.sx-c.x,o.sz-c.z);if(d<bd){bd=d;best=o}});return best};
   function startInteract(c,o,dur){c.st='interact';c.obj=o;c.prog=0;c.pend=null;c.dur=dur||o.dur*rnd(.8,1.6);c.face=Math.atan2(o.x-c.x,o.z-c.z)}
-  function think(c){const rm=roomAt(c.x,c.z);const near=G.stay?[rm]:(Math.random()<.7?[rm,...ADJ[rm]]:[0,1,2,3]);const r=Math.random();
+  function think(c){const rm=roomAt(c.x,c.z);let near=G.stay?[rm]:(Math.random()<.7?[rm,...ADJ[rm]]:[0,1,2,3]);if(G.allow){near=near.filter(r=>G.allow.includes(r));if(!near.length)near=G.allow}const r=Math.random();
     if(r<.5){const busy=new Set(G.chars.filter(o=>o!==c&&(o.st==='interact'||o.pend)).map(o=>(o.obj||o.pend).id));
       const cs=(G.gem&&!G.gem.gone?[...OBJS,G.gem]:OBJS).filter(o=>near.includes(o.room)&&!busy.has(o.id)&&!o.gone);if(cs.length){const o=pick(cs);c.path=makePath(c.x,c.z,o.sx+rnd(-.25,.25),o.sz+rnd(-.25,.25));c.pend=o;return}}
     if(r<.88){const p=randPoint(pick(near));c.path=makePath(c.x,c.z,p[0],p[1]);c.pend=null;return}
@@ -703,12 +708,12 @@ async function asHost(){
     G.seg=G.order[G.si];G.isLast=G.si===G.order.length-1;G.prev={};players().forEach(p=>{G.prev[p.pid]=p.score;p.sp=0;p.pts=0;p.stat={}});
     resetObjects();clearChars();lobbyCrowd();G.dark=false;setView('house');setPh('intro',7)}
   function beginSeg(){({steal:stStart,camera:camStart,where:whStart,bomb:bmStart})[G.seg]()}
-  function segEnd(){clearTimeout(bannerT);$('#banner').className='';gemG.visible=false;bombG.visible=false;spot.visible=false;G.dark=false;normalize();if(G.isLast){startAwards();return}setPh('segres',10)}
+  function segEnd(){G.allow=null;G.blind=false;clearTimeout(bannerT);$('#banner').className='';gemG.visible=false;bombG.visible=false;spot.visible=false;G.dark=false;normalize();if(G.isLast){startAwards();return}setPh('segres',10)}
   function award(p,n){p.sp+=n}
   function normalize(){const pl=players(),top=Math.max(0,...pl.map(p=>p.sp));pl.forEach(p=>{p.pts=top>0?Math.round(Math.max(0,p.sp)/top*10):0;p.score+=p.pts})}
 
   /* ======================= اسرق! ======================= */
-  const ST={R:2,LEN:80,VOTE:30,GEM:40,RUSH:10,CD:10};
+  const ST={R:2,LEN:50,VOTE:20,GEM:25,RUSH:10,CD:10,STP:2.4,T0:1.4,MAX:3};
   const gemG=new THREE.Group();{const gm=new THREE.Mesh(new THREE.OctahedronGeometry(.32,0),new THREE.MeshPhongMaterial({color:0xffd43b,emissive:0xb07800,emissiveIntensity:.6,shininess:120}));gm.position.y=1.15;gemG.add(gm);
     const ped=new THREE.Mesh(new THREE.CylinderGeometry(.32,.38,.85,16),mat('#f1f3f5'));ped.position.y=.42;gemG.add(ped);
     const ring=new THREE.Mesh(new THREE.CircleGeometry(.9,32),new THREE.MeshBasicMaterial({color:0xffe066,transparent:true,opacity:.35,depthWrite:false}));ring.rotation.x=-Math.PI/2;ring.position.y=.03;gemG.add(ring)}
@@ -719,16 +724,15 @@ async function asHost(){
     const total=Math.max(8,Math.min(10,pl.length*2)),cols=shuffle(LOOKS.map((_,i)=>i)).slice(0,Math.max(total,pl.length));
     const list=cols.map((lk,i)=>({lk,pid:i<pl.length?pl[i].pid:null}));
     shuffle(list).forEach(e=>{const c=addChar(e.lk,randPoint(Math.floor(Math.random()*4)),e.pid);if(e.pid)G.players.get(e.pid).ch=c.id});
-    G.trail={};G.marks=[];G.trT=0;clearReplay();setView('house');setPh('st_play',ST.LEN)}
+    setView('house');setPh('st_play',ST.LEN)}
   function allObjs(){return G.gem&&!G.gem.gone?[...OBJS,G.gem]:OBJS}
   function nearestObj(c){const rm=roomAt(c.x,c.z);let best=null,bd=1e9;allObjs().forEach(o=>{if(o.gone||o.room!==rm)return;const d=Math.hypot(o.sx-c.x,o.sz-c.z);if(d<bd){bd=d;best=o}});
     if(!best)allObjs().forEach(o=>{if(o.gone)return;const d=Math.hypot(o.sx-c.x,o.sz-c.z)+20;if(d<bd){bd=d;best=o}});return best}
-  function stPress(p){const c=G.chars[p.ch];if(!c||p.cd>0||c.stealing||c.fleeing)return;const o=nearestObj(c);if(!o)return;
+  function stPress(p){const c=G.chars[p.ch];if(!c||p.cd>0||c.stealing||c.fleeing||p.steals.length>=ST.MAX)return;const o=nearestObj(c);if(!o)return;
     if(c.st==='interact'){c.st='idle';c.obj=null}c.stealing=true;c.pend=o;c.onArrive=null;c.path=makePath(c.x,c.z,o.sx,o.sz);p.cd=ST.CD;if(!c.path.length)arrive(c)}
   function stealDone(c,o){const p=G.players.get(c.pid);if(!p||G.ph!=='st_play'||o.gone)return;
     if(o===G.gem){o.gone=true;gemG.visible=false;SFX.steal();banner('💎 الجوهرة انسرقت!','',2200)}else vanish(o);
     const pts=o.pts+(G.rush?1:0);p.loot+=pts;p.steals.push(o.e);p.msgN=(p.msgN||0)+1;p.msgT=`✅ سرقت ${o.e} ${o.n}! +${pts}`;
-    G.marks.push({pid:p.pid,x:o.x,z:o.z,i:(G.trail[p.pid]||[]).length});
     const rm=roomAt(c.x,c.z),to=pick(ADJ[rm]),pt=randPoint(to);c.fleeing=true;c.path=makePath(c.x,c.z,pt[0],pt[1]);c.onArrive=cc=>{cc.fleeing=false;cc.st='idle';cc.t=rnd(.5,2)};if(!c.path.length)c.onArrive(c)}
   function spawnGem(){const rm=Math.floor(Math.random()*4);let pt=null;for(let k=0;k<40;k++){const q=randPoint(rm);if(G.chars.every(c=>Math.hypot(c.x-q[0],c.z-q[1])>1))if(freeAt(q[0]+.8,q[1])){pt=q;break}}if(!pt)pt=randPoint(rm);
     G.gem={id:'gem',e:'💎',n:'الجوهرة الذهبية',room:rm,x:pt[0],z:pt[1],sx:pt[0]+.8,sz:pt[1],pts:3,dur:4,gone:false,big:true,itemG:gemG};gemG.position.set(pt[0],0,pt[1]);gemG.visible=true;
@@ -739,14 +743,14 @@ async function asHost(){
   function stResolve(){const pl=players(),thief=new Set(pl.filter(p=>p.steals.length).map(p=>p.ch));
     pl.forEach(v=>{v.vote.forEach(id=>{const c=G.chars[id];if(!c||c.id===v.ch)return;
       if(c.pid&&thief.has(c.id)){v.hits++;v.rp+=1;G.players.get(c.pid).caught.push(v.pid)}else{v.miss++;v.rp-=1}})});
-    pl.forEach(t=>{if(!t.steals.length)return;t.lost=Math.min(t.loot,t.caught.length);t.rp+=t.loot-t.lost;if(!t.caught.length){t.rp+=1;t.clean=true}});
+    pl.forEach(t=>{if(!t.steals.length)return;t.lost=t.caught.length*2;t.rp+=t.loot-t.lost;if(!t.caught.length){t.rp+=1;t.clean=true}});
+    G.votesOn={};pl.forEach(v=>v.vote.forEach(id=>{G.votesOn[id]=(G.votesOn[id]||0)+1}));G.revStep=-1;
     pl.forEach(p=>{p.sp+=p.rp;p.stat.steals=(p.stat.steals||0)+p.steals.length;p.stat.hits=(p.stat.hits||0)+p.hits;p.aw.kept=(p.aw.kept||0)+(p.loot-p.lost);p.aw.eyes=(p.aw.eyes||0)+p.hits});
-    G.revOrder=pl.slice().sort((a,b)=>a.loot-b.loot).map(p=>p.pid);buildReplay();setPh('st_rev',2+pl.length*1.1+6.5+8);SFX.gong()}
+    G.revOrder=shuffle(pl.map(p=>p.pid));setPh('st_rev',ST.T0+pl.length*ST.STP+9);SFX.gong()}
   function stTick(dt){
     if(G.ph==='st_play'){
       if(!G.gem&&G.t>=ST.GEM)spawnGem();
       if(!G.rush&&G.t>=ST.LEN-ST.RUSH){G.rush=true;SFX.whistle();banner('⏰ ساعة الذروة! كل غرض +1','',2600)}
-      G.trT+=dt;if(G.trT>=.5){G.trT-=.5;players().forEach(p=>{const c=G.chars[p.ch];if(c)(G.trail[p.pid]=G.trail[p.pid]||[]).push([c.x,c.z])})}
       players().forEach(p=>{if(p.cd>0)p.cd-=dt;const c=G.chars[p.ch];if(!c)return;
         if(cmd(p,'sr'))stPress(p);
         if(p.bot&&p.cd<=0&&!c.stealing&&!c.fleeing&&Math.random()<dt*.07)stPress(p)});
@@ -755,30 +759,27 @@ async function asHost(){
             const s=new Set();if(thieves.length&&Math.random()<.6)s.add(pick(thieves).id);if(Math.random()<.4||!s.size)s.add(pick(G.chars.filter(c=>c.id!==p.ch)).id);p.vote=[...s].slice(0,3);p.vdone=true}return}
         const v=(PR.get(p.pid)||{}).vt;if(v&&v.k===G.voteKey&&Array.isArray(v.s)){p.vote=[...new Set(v.s.map(Number))].filter(id=>id>=0&&id<G.chars.length&&id!==p.ch).slice(0,3);p.vdone=!!v.d}});
       if(G.t>=ST.VOTE||players().every(p=>p.vdone))stResolve()}
-    else if(G.ph==='st_rev'){const n=players().length,tl=2+n*1.1,fr=Math.max(0,Math.min(1,(G.t-tl)/5));REPLAY.forEach(r=>{r.im.count=Math.floor(fr*r.n);r.marks.forEach(m=>m.visible=fr>0&&m.userData.i<=r.im.count)});
-      if(G.t>=G.dur){clearReplay();if(G.r<ST.R)stRound();else segEnd()}}}
-  let REPLAY=[];const gDot=new THREE.SphereGeometry(.13,8,6),gMark=new THREE.OctahedronGeometry(.24,0),dummy=new THREE.Object3D();
-  function clearReplay(){REPLAY.forEach(r=>{scene.remove(r.im);r.im.material.dispose();r.marks.forEach(m=>{scene.remove(m);m.material.dispose()})});REPLAY=[]}
-  function buildReplay(){clearReplay();players().forEach(p=>{const tr=G.trail[p.pid]||[];if(!p.steals.length||tr.length<2)return;const c=G.chars[p.ch];
-    const pts=[];tr.forEach((q,i)=>{const n=tr[i+1];pts.push(q);if(n){pts.push([q[0]+(n[0]-q[0])/3,q[1]+(n[1]-q[1])/3]);pts.push([q[0]+(n[0]-q[0])*2/3,q[1]+(n[1]-q[1])*2/3])}});
-    const im=new THREE.InstancedMesh(gDot,new THREE.MeshBasicMaterial({color:new THREE.Color(LOOKS[c.lk].c).convertSRGBToLinear()}),pts.length);
-    pts.forEach(([x,z],i)=>{dummy.position.set(x,.09,z);dummy.updateMatrix();im.setMatrixAt(i,dummy.matrix)});im.count=0;scene.add(im);
-    const marks=G.marks.filter(m=>m.pid===p.pid).map(m=>{const g=new THREE.Mesh(gMark,new THREE.MeshBasicMaterial({color:0xfcc419}));g.position.set(m.x,.7,m.z);g.visible=false;g.userData.i=m.i*3;scene.add(g);return g});
-    REPLAY.push({pid:p.pid,im,n:pts.length,marks})})}
+    else if(G.ph==='st_rev'){G.revOrder.forEach((pid,i)=>{const t0=ST.T0+i*ST.STP,p=G.players.get(pid),c=G.chars[p.ch];if(!c)return;
+        if(G.t>=t0&&G.revStep<i*2){G.revStep=i*2;SFX.drum();setTimeout(SFX.drum,120);setTimeout(SFX.drum,240)}
+        if(G.t>=t0+1.1&&G.revStep<i*2+1){G.revStep=i*2+1;const th=p.steals.length>0;if(th){SFX.steal();banner(`🕵️ ${p.name} حرامي!`,'red',1300)}else{SFX.pop();banner(`😇 ${p.name} بريء`,'',1300)}c.jumpT=.0001}});
+      if(G.t>=G.dur){if(G.r<ST.R)stRound();else segEnd()}}}
+
 
   /* ======================= ذاكرة الكاميرا ======================= */
-  const CAM={SC:3,WATCH:15,Q:12,ANS:6.5};
+  const CAM={SC:3,WATCH:15,Q:20,ANS:6.5,QN:2};
   function camStart(){G.r=0;G.R=CAM.SC;players().forEach(p=>{p.stat.hits=0;p.stat.qn=0});camScene()}
-  function camScene(){G.r++;resetObjects();clearChars();G.spd=1;G.stay=false;G.dark=false;
-    shuffle(LOOKS.map((_,i)=>i)).slice(0,8).forEach(lk=>addChar(lk,randPoint(Math.floor(Math.random()*4))));
+  function camScene(){G.r++;resetObjects();clearChars();G.spd=1;G.stay=false;G.dark=false;G.blind=false;G.allow=pick([[0,1],[2,3],[0,2],[1,3]]);
+    shuffle(LOOKS.map((_,i)=>i)).slice(0,G.r===1?4:5).forEach(lk=>addChar(lk,randPoint(pick(G.allow))));
     const d=G.r-1,busy=new Set(),usedO=new Set(),tasks=[];G.log={steals:[],hides:[],moves:[],black:null};G.rec=[];G.recT=0;
     const dist=(c,x,z)=>Math.hypot(c.x-x,c.z-z);
     const nearest=(x,z)=>G.chars.filter(c=>!busy.has(c.id)).sort((a,b)=>dist(a,x,z)-dist(b,x,z))[0];
-    for(let i=0;i<[1,1,2][d];i++){const o=pick(OBJS.filter(o=>!usedO.has(o.id)&&(!i||o.room!==tasks[0].o.room)));usedO.add(o.id);const c=nearest(o.sx,o.sz);busy.add(c.id);tasks.push({c,ty:'steal',o,at:i?rnd(5,7.5):rnd(1,4)})}
-    if(d>=1){const h=pick(HIDES),c=nearest(h.hs[0],h.hs[1]);busy.add(c.id);tasks.push({c,ty:'hide',h,at:rnd(2,6)})}
-    if(d>=1){const c=pick(G.chars.filter(c=>!busy.has(c.id)));busy.add(c.id);const rm=roomAt(c.x,c.z);tasks.push({c,ty:'move',from:rm,to:pick(ADJ[rm]),at:rnd(1,4)})}
+    const types=d===0?['steal']:shuffle(['steal',pick(['hide','move'])]),A=G.allow;
+    types.forEach((ty,i)=>{const at=i?rnd(4,6):rnd(1,3);
+      if(ty==='steal'){const o=pick(OBJS.filter(o=>A.includes(o.room)&&!usedO.has(o.id)));usedO.add(o.id);const c=nearest(o.sx,o.sz);busy.add(c.id);tasks.push({c,ty,o,at})}
+      else if(ty==='hide'){const h=pick(HIDES.filter(h=>A.includes(h.room))),c=nearest(h.hs[0],h.hs[1]);busy.add(c.id);tasks.push({c,ty,h,at})}
+      else{const c=pick(G.chars.filter(c=>!busy.has(c.id)));busy.add(c.id);const rm=roomAt(c.x,c.z),to=A.find(r=>r!==rm);tasks.push({c,ty,from:rm,to,at})}});
     if(d===2)G.log.black={at:rnd(6,9),dur:2};
-    G.tasks=tasks;setView('house');setPh('cam_watch',CAM.WATCH)}
+    G.tasks=tasks;setView('cam2');setPh('cam_watch',CAM.WATCH)}
   function camRunTasks(){G.tasks.forEach(T=>{if(T.started||G.t<T.at)return;T.started=true;const c=T.c;c.ai=false;if(c.st==='interact'){c.st='idle';c.obj=null}c.pend=null;
     if(T.ty==='steal'){c.path=makePath(c.x,c.z,T.o.sx,T.o.sz);c.pend=T.o;c.vanish=true;c.forceDur=rnd(2,2.8);c.onVanish=(cc,o)=>{G.log.steals.push({o:o.id,room:o.room,lk:cc.lk,c:cc.id,t:G.t});cc.ai=true;cc.t=rnd(.5,1.5)};if(!c.path.length)arrive(c)}
     else if(T.ty==='hide'){c.path=makePath(c.x,c.z,T.h.hs[0],T.h.hs[1]);c.hideGoal=T.h.hi;c.onHide=(cc,h)=>{G.log.hides.push({h:h.hi,lk:cc.lk,c:cc.id,t:G.t})};if(!c.path.length)arrive(c)}
@@ -799,16 +800,17 @@ async function asHost(){
       C.push({k:'whereHid',txt:`وين اختبى ${lookName(h.lk)}؟`,kind:'text',o:shuffle([h.h,...shuffle(HIDES.map(x=>x.hi).filter(x=>x!==h.h)).slice(0,3)]).map(i=>HIDES[i].hide),a:HIDES[h.h].hide,clip:[h.t-3,h.t+.5],focus:h.c})});
     L.moves.forEach(m=>C.push({k:'whereWent',txt:`لوين راح ${lookName(m.lk)}؟`,kind:'text',o:shuffle([0,1,2,3]).map(r=>ROOMS[r].n),a:ROOMS[m.to].n,clip:[m.t-3,m.t+.4],focus:m.c}));
     const cnt=ROOMS.map(R=>G.chars.filter(c=>c.vis&&c.hid==null&&roomAt(c.x,c.z)===R.i).length);
-    shuffle([0,1,2,3]).filter(r=>cnt[r]>0).slice(0,3).forEach(r=>C.push({k:'count',txt:`كم واحد كان ب${ROOMS[r].n} بآخر التسجيل؟`,kind:'text',o:numOpts(cnt[r]),a:String(cnt[r]),clip:[W-2.5,W]}));
+    shuffle(G.allow.slice()).slice(0,2).forEach(r=>C.push({k:'count',txt:`كم واحد كان ب${ROOMS[r].n} بآخر التسجيل؟`,kind:'text',o:numOpts(cnt[r]),a:String(cnt[r]),clip:[W-2.5,W]}));
     const want=[['whoTook','count','whatRoom','howMany'],['whoHid','whereHid','whoTook','whatRoom','whereWent','count'],['whoTook','whereWent','whereHid','whoHid','howMany','whatRoom','count']][d];
     const out=[],usedK=new Set();
     const take=k=>{const q=C.find(q=>q.k===k&&!out.includes(q));if(q&&!usedK.has(k)){out.push(q);usedK.add(k)}};
-    if(d===0){take('whoTook');take('count');take(pick(['whatRoom','howMany']));}
-    else if(d===1){take(pick(['whoHid','whereHid']));take(pick(['whoTook','whatRoom']));take(pick(['whereWent','count']))}
-    else shuffle(want.slice()).forEach(k=>{if(out.length<3)take(k)});
-    want.forEach(k=>{if(out.length<3)take(k)});C.forEach(q=>{if(out.length<3&&!out.includes(q))out.push(q)});
-    return out.slice(0,3).map((q,i)=>Object.assign(q,{id:G.r+'.'+i,ai:q.o.findIndex(x=>String(x)===String(q.a))}))}
-  function camAsk(){const q=G.qs[G.qi];G.q=q;players().forEach(p=>{p.ans=null;if(p.bot)p.botAt=rnd(1.5,8)});camApply(CAM.WATCH);setView('quiz');setPh('cam_q',CAM.Q)}
+    const Q=CAM.QN;
+    if(G.log.steals.length)take(pick(['whoTook','whoTook','whatRoom']));
+    if(G.log.hides.length)take(pick(['whoHid','whereHid']));
+    if(G.log.moves.length)take('whereWent');
+    shuffle(['count','whoTook','whatRoom','whoHid','whereHid','whereWent']).forEach(k=>{if(out.length<Q)take(k)});C.forEach(q=>{if(out.length<Q&&!out.includes(q))out.push(q)});
+    return shuffle(out.slice(0,Q)).map((q,i)=>Object.assign(q,{id:G.r+'.'+i,ai:q.o.findIndex(x=>String(x)===String(q.a))}))}
+  function camAsk(){const q=G.qs[G.qi];G.q=q;G.blind=true;players().forEach(p=>{p.ans=null;if(p.bot)p.botAt=rnd(2,12)});camApply(CAM.WATCH);setView('cam2q');setPh('cam_q',CAM.Q)}
   function camTick(dt){
     if(G.ph==='cam_watch'){camRunTasks();const b=G.log.black;G.dark=!!(b&&G.t>=b.at&&G.t<b.at+b.dur);G.recT+=dt;while(G.recT>=.1){G.recT-=.1;camRecord()}
       if(G.t>=CAM.WATCH){G.dark=false;camRecord();G.chars.forEach(c=>{c.ai=false;c.path=[];c.pend=null});G.qs=camQuestions();G.qi=0;SFX.shutter();camAsk()}}
@@ -816,7 +818,7 @@ async function asHost(){
         if(p.bot){if(G.t>=p.botAt)p.ans={o:Math.random()<.55?q.ai:Math.floor(Math.random()*4),t:G.t};return}
         const v=cmd(p,'an');if(v&&v[1]===q.id)p.ans={o:+v[2],t:G.t}});
       if(G.t>=CAM.Q||players().every(p=>p.ans)){players().forEach(p=>{p.stat.qn=(p.stat.qn||0)+1;const ok=p.ans&&p.ans.o===q.ai;p.qok=!!ok;p.qpts=ok?(p.ans.t<=5?2:1):0;if(ok){p.stat.hits++;p.aw.mem=(p.aw.mem||0)+1;award(p,p.qpts)}});
-        SFX.right();setPh('cam_ans',CAM.ANS)}}
+        SFX.right();G.blind=false;setPh('cam_ans',CAM.ANS)}}
     else if(G.ph==='cam_ans'){const q=G.q,len=q.clip[1]-q.clip[0];camApply(Math.max(0,q.clip[0])+Math.min(G.t,len));
       if(G.t>=CAM.ANS){G.qi++;if(G.qi<G.qs.length)camAsk();else if(G.r<CAM.SC)camScene();else segEnd()}}}
 
@@ -959,7 +961,7 @@ async function asHost(){
   function publish(){const ph=G.ph,hs={ph,seg:G.seg,si:G.si,sn:G.order.length,r:G.r,R:G.R,left:Math.max(0,(G.dur||0)-G.t),code:room.code||null,
       pl:players().filter(p=>p.online||ph!=='lobby').map(p=>[p.pid,p.name,p.lk0==null?-1:p.lk0]),me:{}};
     const M=(p,o)=>{if(!p.bot)hs.me[p.pid]=o};
-    if(ph==='st_play'){hs.gem=G.gem&&!G.gem.gone?G.gem.room:-1;hs.rush=G.rush?1:0;players().forEach(p=>{const c=G.chars[p.ch];if(!c)return;M(p,{lk:c.lk,cd:Math.ceil(Math.max(0,p.cd)),stl:c.stealing?1:0,n:p.steals.length,loot:p.loot,ms:p.msgN?[p.msgN,p.msgT]:null})})}
+    if(ph==='st_play'){hs.gem=G.gem&&!G.gem.gone?G.gem.room:-1;hs.rush=G.rush?1:0;players().forEach(p=>{const c=G.chars[p.ch];if(!c)return;M(p,{lk:c.lk,cd:Math.ceil(Math.max(0,p.cd)),stl:c.stealing?1:0,n:p.steals.length,mx:ST.MAX,loot:p.loot,ms:p.msgN?[p.msgN,p.msgT]:null})})}
     if(ph==='st_vote'){hs.vo=G.voteOpts;hs.vk=G.voteKey;players().forEach(p=>M(p,{mine:p.ch,d:p.vdone?1:0}))}
     if(ph==='st_rev')players().forEach(p=>M(p,{res:[p.rp,p.hits,p.miss,p.steals.length,p.loot,p.lost,p.clean?1:0,p.caught.length]}));
     if(ph==='cam_q'||ph==='cam_ans'){const q=G.q;hs.q={id:q.id,txt:q.txt,kind:q.kind,o:q.o,n:G.qi+1};if(ph==='cam_ans')hs.q.ai=q.ai;players().forEach(p=>M(p,{a:p.ans?p.ans.o:-1,ok:p.qok?1:0,pts:p.qpts||0}))}
@@ -990,12 +992,13 @@ async function asHost(){
     const dk=G.dark||(G.ph==='final'&&G.fin);$('#dark').classList.toggle('on',!!G.dark);
     lampMats.forEach(m=>m.emissiveIntensity=G.dark?0:m.userData.e);
     const fin=G.ph==='final'&&G.fin,tgt=G.dark?.08:fin?(G.fin.won?.75:.22):1;hemi.intensity+=(tgt-hemi.intensity)*.12;sun.intensity+=((G.dark?0:fin?(G.fin.won?.4:.05):.55)-sun.intensity)*.12;
-    flashes.forEach(f=>{f.m.material.color.set(0xff3b55);f.m.material.opacity=Math.max(0,f.t)*.5});
+    flashes.forEach((f,i)=>{if(G.allow&&!G.allow.includes(i)&&G.ph.startsWith('cam_')){f.m.material.color.set(0x0b0716);f.m.material.opacity=.72;f.m.position.y=2.6}else{f.m.position.y=.04;f.m.material.color.set(0xff3b55);f.m.material.opacity=Math.max(0,f.t)*.5}});
     // hud
     if(!$('#hud').hidden){const S=SEGS[G.seg]||{};const lab=G.ph.startsWith('cam_')?`تسجيل ${G.r} من ${G.R}`:G.ph.startsWith('bm_')?`باقي ${alive().length}`:`جولة ${G.r} من ${G.R}`;
       const h=`${S.e||''} ${S.t||''}<small>${lab}</small>`;const hl=$('#hudL');if(hl._h!==h){hl.innerHTML=h;hl._h=h}
       const ht=$('#hudT');const showT=G.dur&&['st_play','st_vote','cam_q','wh_play'].includes(G.ph);ht.hidden=!showT;if(showT){const l=G.dur-G.t;ht.textContent=fmt(l);ht.classList.toggle('hot',l<=5)}}
     if(G.ph==='intro'){const e=$('#icd');if(e){const n=Math.ceil(G.dur-G.t);e.textContent=n<=3?n:'';if(n<=3&&n!==G.cdN){G.cdN=n;SFX.tick()}}}
+    $('#blind').hidden=!G.blind;
     if(G.ph==='cam_watch')$('#rec').innerHTML=`<i></i>REC 00:${String(Math.floor(G.t)).padStart(2,'0')}`;
     if(G.ph==='cam_ans')$('#rec').innerHTML='⟲ إعادة';
     if(G.ph==='st_play'||G.ph==='wh_play'||G.ph==='cam_q'){const l=Math.ceil(G.dur-G.t);if(l<=5&&l>0&&l!==G.tk){G.tk=l;SFX.tick()}}
@@ -1021,11 +1024,14 @@ async function asHost(){
         if(ox>0&&oy>0){mv=true;if(ox<oy){const s=(dx>=0?1:-1)*ox/2;a.sx-=s;b.sx+=s}else{const s=(dy>=0?1:-1)*oy/2;a.sy-=s;b.sy+=s}}}
         ls.forEach(l=>{l.sx+=(l.ax-l.sx)*.05;l.sy+=(l.ay-l.sy)*.05});if(!mv)break}
       ls.forEach(l=>L.push(l))}
-    if(ph==='st_rev'){const shown=Math.floor((G.t-1)/1.1)+1;G.revOrder.slice(0,Math.max(0,shown)).forEach((pid,i)=>{const p=G.players.get(pid),c=G.chars[p.ch];if(!c)return;c.ring=true;
-        if(i===shown-1&&G.lastPop!==pid){G.lastPop=pid;SFX.pop()}
-        L.push({k:'p'+pid,h:`${esc(p.name)}<small>${p.steals.join('')||'😇'}${p.caught.length?' 👀'+p.caught.length:''}</small>`,c:'name '+(p.caught.length?'bad':p.steals.length?'ok':''),col:LOOKS[c.lk].c,x:c.x,y:hy,z:c.z})});
-      if(G.t>2+players().length*1.1+6.5&&!G.stCard){G.stCard=1;const ov=$('#ov');ov.hidden=false;ov.className='ov';
-        ov.innerHTML=`<div class="card" style="width:min(760px,100%);align-self:end"><div class="rows">${players().sort((a,b)=>b.rp-a.rp).map((p,i)=>`<div class="rrow" style="animation-delay:${i*.15}s">${lookSvg(G.chars[p.ch]?G.chars[p.ch].lk:p.lk0)}<div><b>${esc(p.name)}</b><span class="st">سرق ${p.steals.length?p.steals.join(''):'ولا إشي'}${p.lost?` · انمسك وخسر ${p.lost}`:p.clean?' · ما حدا مسكه +1':''} · حزر ${p.hits} صح${p.miss?`، ${p.miss} غلط`:''}</span></div><div class="pts ${p.rp<0?'neg':''}">${N(sgn(p.rp))}</div></div>`).join('')}</div></div>`}}
+    if(ph==='st_rev'){const n=G.revOrder.length,done=G.t>=ST.T0+n*ST.STP;
+      G.chars.forEach(c=>{const v=G.votesOn[c.id]||0;if(c.pid)return;if(v||done)L.push({k:'v'+c.id,h:done?`🤖 مش لاعب${v?`<small>👀 ${v}</small>`:''}`:`👀 ${v}`,c:'name',col:LOOKS[c.lk].c,x:c.x,y:hy,z:c.z})});
+      G.revOrder.forEach((pid,i)=>{const p=G.players.get(pid),c=G.chars[p.ch];if(!c)return;const t0=ST.T0+i*ST.STP,v=G.votesOn[c.id]||0;
+        if(G.t<t0){if(v)L.push({k:'p'+pid,h:`👀 ${v}`,c:'name',col:LOOKS[c.lk].c,x:c.x,y:hy,z:c.z});return}
+        const st=G.t>=t0+1.1,th=p.steals.length>0;c.ring=!st||th;
+        L.push({k:'p'+pid,h:st?`${esc(p.name)} ${th?'🕵️ حرامي':'😇 بريء'}<small>${th?p.steals.join(''):''}${v?' 👀'+v:''}</small>`:`${esc(p.name)} … 🥁`,c:'name '+(st?(th?'bad':'ok'):''),col:LOOKS[c.lk].c,x:c.x,y:hy,z:c.z})});
+      if(G.t>ST.T0+n*ST.STP+.8&&!G.stCard){G.stCard=1;const ov=$('#ov');ov.hidden=false;ov.className='ov';
+        ov.innerHTML=`<div class="card" style="width:min(760px,100%);align-self:end"><div class="rows">${players().sort((a,b)=>b.rp-a.rp).map((p,i)=>`<div class="rrow" style="animation-delay:${i*.15}s">${lookSvg(G.chars[p.ch]?G.chars[p.ch].lk:p.lk0)}<div><b>${esc(p.name)} ${p.steals.length?'🕵️':'😇'}</b><span class="st">${p.steals.length?`سرق ${p.steals.join('')} (+${p.loot})`:'ما سرق'}${p.lost?` · حزروه ${p.caught.length} (−${p.lost})`:p.clean?' · ما حدا مسكه +1':''} · حزر ${p.hits} صح${p.miss?`، ${p.miss} غلط`:''}</span></div><div class="pts ${p.rp<0?'neg':''}">${N(sgn(p.rp))}</div></div>`).join('')}</div></div>`}}
     else{G.stCard=0;G.lastPop=null}
     if(ph==='cam_ans'&&G.q&&G.q.focus!=null){const c=G.chars[G.q.focus];G.chars.forEach(x=>x.ring=x===c&&c.vis)}else if(ph.startsWith('cam_'))G.chars.forEach(x=>x.ring=false);
     if(ph==='wh_rev')players().forEach(p=>{const c=G.chars[p.ch];if(!c)return;c.ring=true;L.push({k:'w'+p.pid,h:`${esc(p.name)}<small>${p.ok?'✓ '+sgn(p.rp):'✗'}</small>`,c:'name '+(p.ok?'ok':'bad'),col:LOOKS[c.lk].c,x:c.x,y:hy,z:c.z})});
@@ -1118,7 +1124,7 @@ async function asPlayer(){
       root.innerHTML=`<div class="p-center"><p>هالجولة</p><div class="okbig ${r[0]>=0?'g':'r'}">${N(sgn(r[0]))}</div>
         <p>${r[3]?`سرقت ${r[3]} ${r[3]>1?'أغراض':'غرض'} بـ${r[4]} نقاط`:'ما سرقت إشي'}${r[7]?` · مسكوك ${r[7]} 👀`:r[6]?' · ما حدا مسكك 😎 +1':''}</p><p>حزرت ${r[1]} صح${r[2]?` و${r[2]} غلط`:''}</p></div>`;return}
     if(k==='cam_watch'){root.innerHTML=`<div class="p-center"><div class="em">📹</div><h2>طّلع على الشاشة!</h2><p>ركّز: مين بياخذ إشي، مين بيختبي، ومين بيروح وين.</p></div>`;return}
-    if(k.startsWith('cam_q')){const q=HS.q;qSent=null;root.innerHTML=`<div class="ph-top"><span class="stat">سؤال ${q.n} من 3</span><span class="stat t" id="tm"></span></div><h2 style="font-size:24px;font-weight:800;text-align:center;margin:6px 0">${esc(q.txt)}</h2>
+    if(k.startsWith('cam_q')){const q=HS.q;qSent=null;root.innerHTML=`<div class="ph-top"><span class="stat">سؤال ${q.n} من 2</span><span class="stat t" id="tm"></span></div><h2 style="font-size:24px;font-weight:800;text-align:center;margin:6px 0">${esc(q.txt)}</h2>
         <div class="qbtns">${q.o.map((o,i)=>`<button class="qb" data-i="${i}">${q.kind==='look'?lookSvg(o)+esc(lookName(o)):esc(o)}</button>`).join('')}</div><p id="qs" style="text-align:center;color:var(--muted);margin:0"></p>`;
       root.querySelectorAll('.qb').forEach(b=>b.onclick=()=>{if(qSent!=null)return;qSent=+b.dataset.i;send({an:[nx(),q.id,qSent]});b.classList.add('on');root.querySelectorAll('.qb').forEach(x=>x.disabled=x!==b);$('#qs').textContent='✓ وصل جوابك'});return}
     if(k.startsWith('cam_ans')){root.innerHTML=`<div class="p-center">${m.ok?`<div class="okbig g">✓</div><h2>صح! ${N('+'+m.pts)}</h2>`:`<div class="okbig r">✗</div><h2>${m.a<0?'ما جاوبت':'غلط'}</h2>`}<p>الجواب: <b>${HS.q.kind==='look'?esc(lookName(HS.q.o[HS.q.ai])):esc(HS.q.o[HS.q.ai])}</b></p></div>`;return}
@@ -1139,7 +1145,7 @@ async function asPlayer(){
   let MP=null,tapR=null,bmKey='',finKey='';
   function update(k){const m=me();const tm=$('#tm');if(tm)tm.textContent=fmt(left());
     if(m&&m.ms&&m.ms[0]!==lastMs){if(lastMs!=null)toast(m.ms[1]);lastMs=m.ms[0]}
-    if(k.startsWith('st_play')&&m){$('#sN').textContent=`💰 ${m.loot}`;const sb=$('#sb');sb.disabled=m.cd>0||!!m.stl;$('#sl').textContent=m.stl?'⏳ عم تسرق…':m.cd>0?`⏳ ${m.cd}`:'🫳 اسرق';$('#sf').style.width=(m.cd>0?(1-m.cd/10)*100:0)+'%';
+    if(k.startsWith('st_play')&&m){const full=m.n>=m.mx;$('#sN').textContent=`💰 ${m.loot} · سرقات ${m.n}/${m.mx}`;const sb=$('#sb');sb.disabled=full||m.cd>0||!!m.stl;$('#sl').textContent=m.stl?'⏳ عم تسرق…':full?'✓ خلصت سرقاتك':m.cd>0?`⏳ ${m.cd}`:'🫳 اسرق';$('#sf').style.width=(m.cd>0?(1-m.cd/10)*100:0)+'%';
       const ev=$('#ev');const t=HS.rush?'⏰ ساعة الذروة! كل غرض +1':HS.gem>=0?`💎 الجوهرة الذهبية ب${ROOMS[HS.gem].n}`:'';ev.hidden=!t;ev.textContent=t}
     if(k.startsWith('wh_play')&&m){$('#jd').textContent='●'.repeat(m.jl)+'○'.repeat(Math.max(0,(HS.r===1?3:2)-m.jl));const jb=$('#jb');jb.disabled=m.jl<1||m.jcd>0||!!m.done;$('#jf').style.width=(m.jcd>0?(1-m.jcd/2)*100:0)+'%';
       const ws=$('#ws');if(m.done){ws.innerHTML=`<span style="color:var(--mint)">✓ صح! ${N(sgn(m.rp))}</span>`}else if(m.frz>0){ws.innerHTML=`<span style="color:var(--danger)">✗ غلط −1 · استنى ${m.frz}</span>`}else ws.textContent=''}
